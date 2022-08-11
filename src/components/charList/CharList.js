@@ -3,34 +3,27 @@ import PropTypes from 'prop-types';
 
 import Spinner from "../spinner/Spinner";
 import ErrorMessage from "../errorMessage/ErrorMessage";
-import MarvelService from "../../services/MarvelService";
+import useMarvelService from "../../services/MarvelService";
 import './charList.scss';
 
 
 const CharList = (props) => {
     const [charList, setCharList] = useState([]);
-    const [loading, setLoading] = useState(true);   // первичная загрузка, первые 9 персонажей
-    const [error, setError] = useState(false);
     const [newItemLoading, setNewItemLoading] = useState(false);   // загрузка вызывается вручную (при клике на кнопку - вызове onRequest)
     const [offset, setOffset] = useState(210);
     const [charEnded, setCharEnded] = useState(false);
 
-    const marvelService = new MarvelService();
+   const {loading, error, getAllCharacters} = useMarvelService();
 
     useEffect(() => {    // компонент только создан на странице, первый раз отрендерился
-        onRequest();
+        onRequest(offset, true);
     }, [])
 
-    const onRequest = (offset) => {    // метод, который отвечает за запрос на сервер
-        onCharListLoading();
-        marvelService.getAllCharacters(offset)
-            .then(onCharListLoaded)
-            .catch(onError);
+    const onRequest = (offset, initial) => {    // метод, который отвечает за запрос на сервер
+        initial ? setNewItemLoading(false) : setNewItemLoading(true);
+        getAllCharacters(offset)
+            .then(onCharListLoaded);
     }
-
-    const onCharListLoading = () => {   // процес загрузки только запустился и там что-то грузится
-        setNewItemLoading(true);
-    } 
 
     const onCharListLoaded = (newCharList) => {  // новые данные загрузились
         let ended = false;
@@ -39,15 +32,9 @@ const CharList = (props) => {
         }
 
         setCharList(charList => [...charList, ...newCharList]);    // здесь offset, charList - это все текущий state
-        setLoading(false);
         setNewItemLoading(newItemLoading => false);
         setOffset(offset => offset + 9);
         setCharEnded(charEnded => ended);
-    }
-
-    const onError = () => {
-        setError(true);
-        setLoading(loading => false);
     }
 
     const itemRefs = useRef([]);
@@ -97,14 +84,13 @@ const CharList = (props) => {
 
     const items = renderItems(charList);
     const errorMessage = error ? <ErrorMessage/> : null;
-    const spiner = loading ? <Spinner/> : null;
-    const content = !(loading || error) ? items : null;
+    const spinner = loading && !newItemLoading ? <Spinner/> : null;
 
     return (
         <div className="char__list">
             {errorMessage}
-            {spiner}
-            {content}
+            {spinner}
+            {items}
             <button 
                 className="button button__main button__long"
                 disabled={newItemLoading}
