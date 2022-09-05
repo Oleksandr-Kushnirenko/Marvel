@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import {Link} from "react-router-dom";
 
 import useMarvelService from "../../services/MarvelService";
 import Spinner from "../spinner/Spinner";
@@ -84,7 +85,10 @@ const View = ({char}) => {
 
                         return (
                             <li key={i} className="char__comics-item">
-                                {item.name}
+                                <Link to={`/comics/${item.resourceURI.substring(43)}`}>
+                                    {item.name}
+                                </Link>
+                                
                             </li>
                         )
                     })
